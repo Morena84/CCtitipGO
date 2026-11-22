@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CCtitipGO — Cross-Border Personal Shopper & Logistics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              teal: '#59B5B2',
+              tealDark: '#3D8E8B',
+              tealLight: '#EAF6F6',
+              charcoal: '#282E33',
+              bg: '#F7F7F7'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #F7F7F7;
+      color: #282E33;
+    }
+    .font-editorial { font-family: 'Cormorant Garamond', serif; }
+    .fade-up { opacity: 0; transform: translateY(14px); transition: opacity 0.55s ease-out, transform 0.55s ease-out; }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="antialiased selection:bg-[#59B5B2] selection:text-white">
+
+  <!-- DEMO MODE BANNER (Otomatis hilang setelah SCRIPT_URL diisi) -->
+  <div id="demoBanner" class="hidden bg-[#282E33] text-white text-[11px] text-center py-2 px-4 tracking-wide">
+    Mode Preview Aktif • Isi <code class="bg-[#59B5B2]/25 text-[#8BE0DD] px-1.5 py-0.5 rounded">SCRIPT_URL</code> Google Apps Script untuk sinkronisasi live.
+  </div>
+
+  <!-- STICKY BRAND HEADER -->
+  <header class="sticky top-0 z-30 bg-[#F7F7F7]/92 backdrop-blur-md border-b border-[#282E33]/10">
+    <div class="max-w-xl mx-auto px-5 py-3 flex items-center justify-between">
+      <!-- Brand Logo Lockup matching CCtitipGO.jpg -->
+      <a href="?" class="flex items-center gap-2.5 group">
+        <svg class="w-9 h-9 shrink-0 transition-transform group-hover:scale-105" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Left Teal Bag Half -->
+          <path d="M46 34V26C46 18.268 52.268 12 60 12V20C56.686 20 54 22.686 54 26V34H46Z" fill="#59B5B2"/>
+          <path d="M32 34H60V42H39L36 62L28 66L32 34Z" fill="#59B5B2"/>
+          <path d="M26 84L33 80L31 98H60V106H23L26 84Z" fill="#59B5B2"/>
+          <!-- Right Charcoal Bag Half -->
+          <path d="M74 34V26C74 18.268 67.732 12 60 12V20C63.314 20 66 22.686 66 26V34H74Z" fill="#282E33"/>
+          <path d="M88 34H60V42H81L84 62L92 66L88 34Z" fill="#282E33"/>
+          <path d="M94 84L87 80L89 98H60V106H97L94 84Z" fill="#282E33"/>
+          <!-- Interlocking CC + Smile -->
+          <path d="M58 53C54.5 49.5 49.8 47.5 44.5 47.5C34 47.5 25.5 56 25.5 66.5C25.5 77 34 85.5 44.5 85.5C50 85.5 54.9 83.2 58.3 79.5" stroke="#59B5B2" stroke-width="8.5" stroke-linecap="round"/>
+          <path d="M92 56C88.8 50.8 83 47.5 76.5 47.5C66.5 47.5 58.3 55.2 57.6 65" stroke="#282E33" stroke-width="8.5" stroke-linecap="round"/>
+          <path d="M61 77.5C64.5 82.3 70.1 85.5 76.5 85.5C83.5 85.5 89.6 81.7 92.8 76" stroke="#282E33" stroke-width="8.5" stroke-linecap="round"/>
+          <path d="M49 69C52.2 73 56.8 75.5 62 75.5C67.2 75.5 71.8 73 75 69" stroke="#59B5B2" stroke-width="7.5" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <div class="text-xl font-extrabold tracking-tight leading-none">
+            <span class="text-[#59B5B2]">CC</span><span class="text-[#282E33]">titipGO</span>
+          </div>
+          <span id="brandTagline" class="text-[10px] tracking-wider uppercase text-[#282E33]/55 hidden sm:block mt-0.5">Cross-Border Personal Shopper</span>
+        </div>
+      </a>
+
+      <div class="flex items-center gap-2">
+        <button onclick="openPaymentModal()" class="text-[11px] uppercase tracking-wider px-3 py-1.5 border border-[#282E33]/25 text-[#282E33] rounded-full hover:border-[#59B5B2] hover:text-[#3D8E8B] transition font-semibold">
+          Rekening & Kurs
+        </button>
+        <a id="headerActionBtn" href="#orderFormSection" class="text-[11px] uppercase tracking-wider px-3.5 py-1.5 bg-[#59B5B2] text-white rounded-full hover:bg-[#3D8E8B] transition font-semibold shadow-2xs">
+          Titip Sekarang
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================= -->
+  <!-- VIEW A: PERSONAL INVOICE MODE (?inv=ORD-261123-0930)      -->
+  <!-- ========================================================= -->
+  <main id="invoiceView" class="hidden max-w-xl mx-auto px-5 pt-8 pb-24">
+    <div class="bg-white border border-[#282E33]/12 rounded-3xl p-6 sm:p-8 shadow-xs">
+      <div class="flex items-start justify-between border-b border-[#282E33]/10 pb-5 mb-6">
+        <div>
+          <span class="text-[11px] uppercase tracking-[0.2em] text-[#3D8E8B] font-bold block mb-1">Official Digital Invoice</span>
+          <h1 id="invOrderId" class="font-editorial text-3xl font-bold text-[#282E33]">ORD-000000</h1>
+          <p id="invDate" class="text-xs text-[#282E33]/50 mt-0.5">-</p>
+        </div>
+        <span id="invStatusBadge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-800">
+          UNPAID
+        </span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 text-xs mb-6 bg-[#F7F7F7] p-4 rounded-2xl border border-[#282E33]/8">
+        <div>
+          <span class="text-[#282E33]/50 block mb-0.5">Ditagihkan Kepada</span>
+          <strong id="invCustName" class="text-[#282E33] text-sm">-</strong>
+          <span id="invCustWa" class="text-[#282E33]/65 block mt-0.5">-</span>
+        </div>
+        <div>
+          <span class="text-[#282E33]/50 block mb-0.5">Titik Drop-Off Medan</span>
+          <strong id="invDropoff" class="text-[#282E33] text-sm">-</strong>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <span class="text-[11px] uppercase tracking-widest text-[#282E33]/50 font-semibold block mb-2">Rincian Pesanan & Titipan</span>
+        <div id="invItems" class="text-sm text-[#282E33] bg-white border border-[#282E33]/15 rounded-2xl p-4 leading-relaxed">
+          -
+        </div>
+        <p id="invNotes" class="text-xs text-[#282E33]/65 mt-2 italic">Catatan: -</p>
+      </div>
+
+      <div class="border-t border-dashed border-[#282E33]/25 pt-5 mb-6">
+        <div class="flex justify-between items-center text-xs text-[#282E33]/60 mb-1">
+          <span>Estimasi Awal</span>
+          <span id="invEstAmount">Rp 0</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-xs uppercase tracking-widest font-bold text-[#282E33]">Total Tagihan Final</span>
+          <span id="invFinalAmount" class="font-editorial text-3xl font-bold text-[#3D8E8B]">Rp 0</span>
+        </div>
+      </div>
+
+      <div class="space-y-2.5">
+        <button onclick="openPaymentModal()" class="w-full py-3.5 bg-[#59B5B2] text-white text-xs uppercase tracking-[0.18em] font-bold rounded-xl hover:bg-[#3D8E8B] transition">
+          Lihat Rekening Pembayaran
+        </button>
+        <button onclick="confirmPaymentWa()" class="w-full py-3 border border-[#282E33]/25 text-[#282E33] text-xs uppercase tracking-[0.15em] font-semibold rounded-xl hover:bg-[#282E33] hover:text-white transition">
+          Kirim Bukti Transfer via WA
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ========================================================= -->
+  <!-- VIEW B: EDITORIAL CATALOG & DAILY ORDER MODE (DEFAULT)    -->
+  <!-- ========================================================= -->
+  <main id="catalogView" class="max-w-xl mx-auto px-5 pb-28">
+
+    <!-- 1. HERO & PERSONAL GREETING -->
+    <section class="pt-9 pb-8 border-b border-[#282E33]/12 fade-up">
+      <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#EAF6F6] border border-[#59B5B2]/40 mb-4">
+        <span class="w-2 h-2 rounded-full bg-[#59B5B2] animate-pulse"></span>
+        <p id="personalGreeting" class="text-[11px] uppercase tracking-[0.18em] text-[#3D8E8B] font-bold">
+          OPEN PRE-ORDER BATCH
+        </p>
+      </div>
+
+      <h1 id="batchTitle" class="font-editorial text-4xl sm:text-5xl leading-[1.08] font-bold text-[#282E33] mb-3">
+        Memuat Jadwal Batch...
+      </h1>
+      <p id="routeSummary" class="text-sm text-[#282E33]/75 leading-relaxed mb-6">
+        Layanan personal shopper & logistik lintas negara terpercaya.
+      </p>
+
+      <!-- Schedule & Cutoff Card -->
+      <div class="bg-white border border-[#282E33]/12 rounded-2xl p-5 shadow-2xs space-y-3.5">
+        <div class="flex justify-between items-start border-b border-[#282E33]/8 pb-3.5">
+          <div>
+            <span class="text-[10px] uppercase tracking-widest text-[#282E33]/50 font-semibold block mb-0.5">Batas Tutup PO (Cutoff)</span>
+            <strong id="cutoffLabel" class="text-sm font-bold text-[#282E33]">-</strong>
+          </div>
+          <button onclick="saveToCalendar()" class="text-xs font-semibold text-[#3D8E8B] hover:text-white hover:bg-[#59B5B2] bg-[#EAF6F6] px-3 py-1.5 rounded-lg transition">
+            + Kalender
+          </button>
+        </div>
+        <div class="flex flex-wrap justify-between items-center gap-2 text-xs text-[#282E33]/75">
+          <span>Estimasi Tiba Medan: <strong id="etaMedan" class="text-[#282E33]">-</strong></span>
+          <span class="px-2.5 py-0.5 bg-[#282E33] text-white rounded-full font-medium text-[11px]">Hand-Carry & Kargo</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. EDITORIAL CATALOG & CATEGORY FILTER -->
+    <section class="py-8 border-b border-[#282E33]/12 fade-up">
+      <div class="flex items-end justify-between mb-4">
+        <div>
+          <span class="text-[10px] uppercase tracking-[0.2em] text-[#3D8E8B] font-bold">Curated Selection</span>
+          <h2 class="font-editorial text-3xl font-bold text-[#282E33]">Katalog & Jasa Titip</h2>
+        </div>
+        <span class="text-xs text-[#282E33]/60 font-medium">Atur Qty (+/-)</span>
+      </div>
+
+      <!-- Category Filter Pills -->
+      <div id="categoryTabs" class="flex gap-2 overflow-x-auto no-scrollbar pb-3 mb-3"></div>
+
+      <!-- Catalog Items List -->
+      <div id="catalogContainer" class="space-y-3.5">
+        <p class="text-sm text-[#282E33]/50 italic">Mengambil daftar katalog terbaru...</p>
+      </div>
+    </section>
+
+    <!-- 3. SMART PERSONALIZED ORDER FORM -->
+    <section id="orderFormSection" class="py-9 border-b border-[#282E33]/12 fade-up">
+      <span class="text-[10px] uppercase tracking-[0.2em] text-[#3D8E8B] font-bold">Direct Booking</span>
+      <h2 class="font-editorial text-3xl font-bold text-[#282E33] mb-1">Form Titip Barang</h2>
+      <p class="text-xs text-[#282E33]/65 mb-6">Otomatis tercatat di sistem rekap harian kami dan terhubung ke WhatsApp.</p>
+
+      <form id="jastipForm" onsubmit="submitOrder(event)" class="space-y-4">
+        <div>
+          <label class="block text-[11px] uppercase tracking-wider text-[#282E33]/80 font-semibold mb-1.5">Nama Pemesan *</label>
+          <input type="text" id="custName" required placeholder="Contoh: Susi (Medan)"
+            class="w-full px-4 py-3 bg-white border border-[#282E33]/20 rounded-xl text-sm focus:outline-none focus:border-[#59B5B2] transition" />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] uppercase tracking-wider text-[#282E33]/80 font-semibold mb-1.5">Nomor WhatsApp *</label>
+            <input type="tel" id="custWa" required placeholder="0812xxxxxxxx"
+              class="w-full px-4 py-3 bg-white border border-[#282E33]/20 rounded-xl text-sm focus:outline-none focus:border-[#59B5B2] transition" />
+          </div>
+          <div>
+            <label class="block text-[11px] uppercase tracking-wider text-[#282E33]/80 font-semibold mb-1.5">Titik Drop-Off Medan *</label>
+            <select id="dropoffPoint" required
+              class="w-full px-4 py-3 bg-white border border-[#282E33]/20 rounded-xl text-sm focus:outline-none focus:border-[#59B5B2] transition">
+              <option value="Pickup Kp. Lalang (Medan)">Pickup Kp. Lalang (Medan)</option>
+              <option value="Pickup Titipapan, Marelan">Pickup Titipapan, Marelan</option>
+              <option value="Kirim Kurir Instan / Ekspedisi Medan">Kirim Kurir dari Titik Medan</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] uppercase tracking-wider text-[#282E33]/80 font-semibold mb-1.5">Detail Titipan Tambahan / Varian / Link Produk</label>
+          <textarea id="orderNotes" rows="3" placeholder="Tulis varian rasa bolu, nama obat/vitamin, ukuran baju, atau titipan khusus di luar katalog..."
+            class="w-full px-4 py-3 bg-white border border-[#282E33]/20 rounded-xl text-sm focus:outline-none focus:border-[#59B5B2] transition"></textarea>
+        </div>
+
+        <!-- Ringkasan Kalkulasi Otomatis -->
+        <div class="bg-[#EAF6F6]/70 rounded-2xl p-4 space-y-2 border border-[#59B5B2]/35">
+          <div class="flex justify-between text-xs text-[#282E33]/75">
+            <span>Total Item Katalog Dipilih:</span>
+            <span id="selectedCount" class="font-bold text-[#282E33]">0 item</span>
+          </div>
+          <div id="selectedSummaryList" class="text-[11px] text-[#282E33]/70 space-y-0.5"></div>
+          <div class="flex justify-between items-center pt-2.5 border-t border-[#59B5B2]/25">
+            <span class="text-xs uppercase tracking-wider text-[#282E33] font-bold">Estimasi Awal</span>
+            <span id="totalEstimateText" class="font-editorial text-2xl font-bold text-[#3D8E8B]">Rp 0</span>
+          </div>
+        </div>
+
+        <button type="submit" id="submitBtn"
+          class="w-full py-3.5 bg-[#282E33] text-white text-xs uppercase tracking-[0.2em] font-bold rounded-xl hover:bg-[#59B5B2] transition shadow-sm">
+          Kirim Pesanan & Konfirmasi WA
+        </button>
+      </form>
+    </section>
+
+    <!-- 4. UPDATES & REVIEWS (NO NESTED SCROLL - LOAD MORE PATTERN) -->
+    <section class="py-9 fade-up">
+      <span class="text-[10px] uppercase tracking-[0.2em] text-[#3D8E8B] font-bold">Track Record</span>
+      <h2 class="font-editorial text-3xl font-bold text-[#282E33] mb-5">Catatan & Ulasan Pelanggan</h2>
+      <div id="updatesContainer" class="space-y-3"></div>
+      <button id="loadMoreBtn" onclick="renderMoreUpdates()" class="hidden mt-4 w-full py-2.5 border border-[#282E33]/25 rounded-xl text-xs uppercase tracking-widest text-[#282E33] hover:bg-[#282E33] hover:text-white transition font-semibold">
+        Lihat Ulasan Lainnya
+      </button>
+    </section>
+
+  </main>
+
+  <!-- FLOATING CART BAR (Muncul otomatis jika ada item dipilih) -->
+  <div id="floatingCartBar" class="fixed bottom-4 inset-x-4 max-w-xl mx-auto z-20 hidden">
+    <a href="#orderFormSection" class="flex items-center justify-between bg-[#282E33] text-white px-5 py-3.5 rounded-2xl shadow-lg hover:bg-[#1E2327] transition">
+      <div>
+        <span id="floatCartCount" class="text-[11px] text-[#7AD3D0] uppercase tracking-wider block font-bold">0 Item Dipilih</span>
+        <strong id="floatCartTotal" class="font-editorial text-xl">Rp 0</strong>
+      </div>
+      <span class="text-xs uppercase tracking-widest bg-[#59B5B2] text-white px-3.5 py-2 rounded-xl font-bold">
+        Lanjut Form →
+      </span>
+    </a>
+  </div>
+
+  <!-- HIDDEN PAYMENT & KURS MODAL -->
+  <div id="paymentModal" class="fixed inset-0 z-50 hidden bg-[#282E33]/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white max-w-sm w-full rounded-3xl p-6 shadow-2xl relative border border-[#282E33]/10">
+      <button onclick="closePaymentModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#F7F7F7] text-[#282E33]/60 hover:text-[#282E33] flex items-center justify-center text-sm font-bold">✕</button>
+      <span class="text-[10px] uppercase tracking-[0.2em] text-[#3D8E8B] font-bold">Payment & Exchange Rate</span>
+      <h3 class="font-editorial text-2xl font-bold text-[#282E33] mt-1 mb-4">Info Pembayaran & Kurs</h3>
+
+      <div class="bg-[#EAF6F6] border border-[#59B5B2]/40 rounded-2xl p-3.5 mb-4">
+        <span class="text-[10px] uppercase tracking-wider text-[#3D8E8B] font-bold block mb-1">Kurs Berlaku Batch Ini</span>
+        <p id="modalKurs" class="text-xs font-bold text-[#282E33] leading-relaxed">-</p>
+      </div>
+
+      <div class="border border-[#282E33]/15 rounded-2xl p-4 space-y-2 mb-5 bg-[#F7F7F7]/50">
+        <span id="modalBankName" class="text-xs text-[#282E33]/60 font-medium block">-</span>
+        <div class="flex items-center justify-between">
+          <strong id="modalBankAcc" class="text-lg tracking-wider text-[#282E33] font-mono">-</strong>
+          <button onclick="copyAccount()" id="copyBtn" class="text-xs px-3 py-1.5 bg-[#59B5B2] text-white font-semibold rounded-lg hover:bg-[#3D8E8B] transition">
+            Salin
+          </button>
+        </div>
+        <span id="modalBankHolder" class="text-xs text-[#282E33]/65 block">-</span>
+      </div>
+
+      <p class="text-[11px] text-[#282E33]/55 leading-relaxed">
+        *Untuk titipan barang custom (di luar harga tetap katalog), admin akan mengirimkan link Invoice Personal setelah barang dibelanjakan.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // KONFIGURASI: Ganti dengan URL Web App Google Apps Script Anda
+    // =========================================================================
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxEQhuzclJOV3oTQVTcjOqe7r-EQaOkL3K4xnH1LKMtgqSGQXmZk3Ck2QmvABvg8hwE/exec';
+
+    const FALLBACK_DATA = {
+      settings: {
+        brand_name: 'CCtitipGO',
+        tagline: 'Cross-Border Personal Shopper & Logistics',
+        batch_title: 'BATCH PENANG & KUALA LUMPUR',
+        route_summary: 'Penang / KL → Medan (Pickup Kp. Lalang & Titipapan, Marelan)',
+        cutoff_label: 'Sabtu, 28 Nov 2026 • 20.00 WIB',
+        eta_medan: 'Senin, 30 Nov 2026',
+        kurs_info: '1 RM = Rp 3.650  |  1 SGD = Rp 11.900  |  1 THB = Rp 475',
+        bank_name: 'Bank Permata / BCA',
+        bank_account: '1234567890',
+        bank_holder: 'a.n. CCtitipGO Official',
+        wa_admin: '6281234567890'
+      },
+      catalog: [
+        { id: 'ITM-01', category: 'Kuliner & Oleh-Oleh', name: 'Bolu & Pastry Khas Penang (Box)', price: 85000, note: 'Fresh hand-carry hari H keberangkatan', image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600&q=80' },
+        { id: 'ITM-02', category: 'Farmasi & Kesehatan', name: 'Titip Obat / Vitamin Pharmacy MY', price: 25000, note: 'Jasa titip per item + harga struk asli', image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&q=80' },
+        { id: 'ITM-03', category: 'Fashion & Retail', name: 'Titip Belanja Mall (Uniqlo / Sephora)', price: 35000, note: 'Fee per item (menyesuaikan ukuran)', image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&q=80' },
+        { id: 'ITM-04', category: 'Snack & Minuman', name: 'Kopi Putih & Snack Lokal Malaysia', price: 45000, note: 'Packing aman dengan bubble wrap', image: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=600&q=80' }
+      ],
+      updates: [
+        { date: '20 Nov 2026', author: 'Susi (Ciacia Medan)', route: 'Penang → Medan', message: 'Bolu sama titipan farmasi sampai dengan aman di Kp. Lalang, packing rapi dan fresh!' },
+        { date: '15 Nov 2026', author: 'Kevin T.', route: 'KL → Medan', message: 'Fast respon, kurs transparan sesuai struk toko. Sudah langganan tiap minggu.' },
+        { date: '10 Nov 2026', author: 'Mei Ling', route: 'Johor → Medan', message: 'Pickup di Titipapan sangat praktis, admin selalu update posisi barang.' }
+      ],
+      sampleInvoice: {
+        orderId: 'ORD-261123-0930',
+        date: '23 Nov 2026, 09:30',
+        customerName: 'Susi (Ciacia Medan)',
+        whatsapp: '08123456789',
+        dropoffPoint: 'Pickup Kp. Lalang (Medan)',
+        itemsDetail: 'Bolu & Pastry Khas Penang (2x), Titip Vitamin Blackmores Pharmacy (1x)',
+        totalEstimate: 195000,
+        finalBill: 425000,
+        paymentStatus: 'UNPAID',
+        notes: 'Bolu rasa original 1, pandan 1. Vitamin struk RM 63.'
+      }
+    };
+
+    let appData = { settings: {}, catalog: [], updates: [] };
+    let activeInvoice = null;
+    let cart = {};
+    let activeCategory = 'Semua';
+    let visibleUpdatesCount = 2;
+
+    const isDemoMode = !SCRIPT_URL || SCRIPT_URL.includes('PASTE_URL');
+
+    async function initApp() {
+      setupScrollObserver();
+      const params = new URLSearchParams(window.location.search);
+      const invParam = params.get('inv');
+
+      if (isDemoMode) {
+        document.getElementById('demoBanner').classList.remove('hidden');
+        appData = FALLBACK_DATA;
+        renderSettings();
+        if (invParam) {
+          activeInvoice = { ...FALLBACK_DATA.sampleInvoice, orderId: invParam };
+          renderInvoiceMode();
+        } else {
+          applyUrlPersonalization(params);
+          renderCategoryTabs();
+          renderCatalog();
+          renderMoreUpdates(true);
+        }
+        return;
+      }
+
+      try {
+        const fetchUrl = invParam ? `${SCRIPT_URL}?inv=${encodeURIComponent(invParam)}` : SCRIPT_URL;
+        const res = await fetch(fetchUrl);
+        const data = await res.json();
+
+        if (data.status === 'success') {
+          appData = data;
+          renderSettings();
+          if (data.mode === 'invoice' && data.invoice) {
+            activeInvoice = data.invoice;
+            renderInvoiceMode();
+          } else {
+            applyUrlPersonalization(params);
+            renderCategoryTabs();
+            renderCatalog();
+            renderMoreUpdates(true);
+          }
+        }
+      } catch (e) {
+        console.error('Gagal memuat data:', e);
+      }
+    }
+
+    function applyUrlPersonalization(params) {
+      const toName = params.get('to');
+      const wa = params.get('wa');
+      const drop = params.get('drop');
+
+      if (toName) {
+        document.getElementById('personalGreeting').textContent = `KHUSUS UNTUK: ${toName.toUpperCase()}`;
+        document.getElementById('custName').value = toName;
+      }
+      if (wa) document.getElementById('custWa').value = wa;
+      if (drop) {
+        const select = document.getElementById('dropoffPoint');
+        for (let opt of select.options) {
+          if (opt.value.toLowerCase().includes(drop.toLowerCase())) {
+            select.value = opt.value;
+          }
+        }
+      }
+    }
+
+    function renderSettings() {
+      const s = appData.settings || {};
+      if (s.tagline) document.getElementById('brandTagline').textContent = s.tagline;
+      if (s.batch_title) document.getElementById('batchTitle').textContent = s.batch_title;
+      if (s.route_summary) document.getElementById('routeSummary').textContent = s.route_summary;
+      if (s.cutoff_label) document.getElementById('cutoffLabel').textContent = s.cutoff_label;
+      if (s.eta_medan) document.getElementById('etaMedan').textContent = s.eta_medan;
+
+      document.getElementById('modalKurs').textContent = s.kurs_info || '-';
+      document.getElementById('modalBankName').textContent = s.bank_name || '-';
+      document.getElementById('modalBankAcc').textContent = s.bank_account || '-';
+      document.getElementById('modalBankHolder').textContent = s.bank_holder || '-';
+    }
+
+    function renderInvoiceMode() {
+      document.getElementById('catalogView').classList.add('hidden');
+      document.getElementById('invoiceView').classList.remove('hidden');
+      document.getElementById('headerActionBtn').textContent = 'Katalog PO';
+      document.getElementById('headerActionBtn').href = '?';
+
+      const inv = activeInvoice;
+      document.getElementById('invOrderId').textContent = inv.orderId;
+      document.getElementById('invDate').textContent = inv.date;
+      document.getElementById('invCustName').textContent = inv.customerName;
+      document.getElementById('invCustWa').textContent = inv.whatsapp;
+      document.getElementById('invDropoff').textContent = inv.dropoffPoint;
+      document.getElementById('invItems').textContent = inv.itemsDetail;
+      document.getElementById('invNotes').textContent = `Catatan: ${inv.notes}`;
+      document.getElementById('invEstAmount').textContent = `Rp ${inv.totalEstimate.toLocaleString('id-ID')}`;
+      document.getElementById('invFinalAmount').textContent = `Rp ${inv.finalBill.toLocaleString('id-ID')}`;
+
+      const badge = document.getElementById('invStatusBadge');
+      badge.textContent = inv.paymentStatus;
+      if (inv.paymentStatus.toUpperCase() === 'PAID') {
+        badge.className = 'px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#EAF6F6] text-[#3D8E8B]';
+      }
+    }
+
+    function confirmPaymentWa() {
+      if (!activeInvoice) return;
+      const waNumber = appData.settings.wa_admin || '6281234567890';
+      const msg = encodeURIComponent(
+        `Halo ${appData.settings.brand_name || 'CCtitipGO'}, saya mau konfirmasi pembayaran untuk Invoice:
+` +
+        `• No. Invoice: ${activeInvoice.orderId}
+` +
+        `• Nama: ${activeInvoice.customerName}
+` +
+        `• Total Tagihan: Rp ${activeInvoice.finalBill.toLocaleString('id-ID')}
+` +
+        `(Berikut saya lampirkan bukti transfernya)`
+      );
+      window.open(`https://wa.me/${waNumber}?text=${msg}`, '_blank');
+    }
+
+    function renderCategoryTabs() {
+      const cats = ['Semua', ...new Set(appData.catalog.map(i => i.category))];
+      const container = document.getElementById('categoryTabs');
+      container.innerHTML = cats.map(c => `
+        <button type="button" onclick="selectCategory('${c}')"
+          class="px-3.5 py-1.5 rounded-full text-xs whitespace-nowrap transition ${activeCategory === c ? 'bg-[#282E33] text-white font-semibold' : 'bg-white border border-[#282E33]/15 text-[#282E33]/75 hover:border-[#59B5B2]'}">
+          ${c}
+        </button>
+      `).join('');
+    }
+
+    function selectCategory(cat) {
+      activeCategory = cat;
+      renderCategoryTabs();
+      renderCatalog();
+    }
+
+    function renderCatalog() {
+      const container = document.getElementById('catalogContainer');
+      const filtered = activeCategory === 'Semua'
+        ? appData.catalog
+        : appData.catalog.filter(i => i.category === activeCategory);
+
+      if (!filtered.length) {
+        container.innerHTML = '<p class="text-sm text-[#282E33]/50">Belum ada item aktif di kategori ini.</p>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(item => `
+        <div class="bg-white border border-[#282E33]/12 rounded-2xl p-3.5 flex gap-3.5 items-center shadow-2xs hover:border-[#59B5B2] transition">
+          <img src="${item.image}" alt="${item.name}" class="w-20 h-20 object-cover rounded-xl bg-[#F7F7F7] shrink-0" />
+          <div class="flex-1 min-w-0">
+            <span class="text-[10px] uppercase tracking-wider text-[#3D8E8B] font-bold">${item.category}</span>
+            <h3 class="text-sm font-bold text-[#282E33] truncate">${item.name}</h3>
+            <p class="text-xs text-[#282E33]/60 line-clamp-1 mb-2">${item.note}</p>
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-extrabold text-[#282E33]">Rp ${item.price.toLocaleString('id-ID')}</span>
+              <div class="flex items-center gap-2 bg-[#F7F7F7] border border-[#282E33]/10 rounded-lg px-2 py-1">
+                <button type="button" onclick="updateQty('${item.id}', -1)" class="w-5 h-5 text-[#282E33]/70 font-bold hover:text-[#282E33]">-</button>
+                <span id="qty-${item.id}" class="text-xs font-bold w-4 text-center text-[#282E33]">${cart[item.id] || 0}</span>
+                <button type="button" onclick="updateQty('${item.id}', 1)" class="w-5 h-5 text-[#3D8E8B] font-bold hover:text-[#59B5B2]">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updateQty(id, delta) {
+      cart[id] = Math.max(0, (cart[id] || 0) + delta);
+      const qtyEl = document.getElementById(`qty-${id}`);
+      if (qtyEl) qtyEl.textContent = cart[id];
+      calculateTotal();
+    }
+
+    function calculateTotal() {
+      let total = 0;
+      let count = 0;
+      const lines = [];
+
+      appData.catalog.forEach(item => {
+        const q = cart[item.id] || 0;
+        if (q > 0) {
+          total += item.price * q;
+          count += q;
+          lines.push(`• ${item.name} (${q}x) — Rp ${(item.price * q).toLocaleString('id-ID')}`);
+        }
+      });
+
+      document.getElementById('selectedCount').textContent = `${count} item`;
+      document.getElementById('selectedSummaryList').innerHTML = lines.join('<br/>');
+      document.getElementById('totalEstimateText').textContent = `Rp ${total.toLocaleString('id-ID')}`;
+
+      const floatBar = document.getElementById('floatingCartBar');
+      if (count > 0) {
+        floatBar.classList.remove('hidden');
+        document.getElementById('floatCartCount').textContent = `${count} Item Dipilih`;
+        document.getElementById('floatCartTotal').textContent = `Rp ${total.toLocaleString('id-ID')}`;
+      } else {
+        floatBar.classList.add('hidden');
+      }
+
+      return { total, count };
+    }
+
+    async function submitOrder(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Menyimpan Pesanan...';
+
+      const { total } = calculateTotal();
+      const selectedLines = appData.catalog
+        .filter(item => (cart[item.id] || 0) > 0)
+        .map(item => `${item.name} (${cart[item.id]}x)`);
+
+      const itemsDetail = selectedLines.length ? selectedLines.join(', ') : 'Titip Custom (Lihat Catatan)';
+
+      const payload = {
+        customerName: document.getElementById('custName').value.trim(),
+        whatsapp: document.getElementById('custWa').value.trim(),
+        dropoffPoint: document.getElementById('dropoffPoint').value,
+        itemsDetail: itemsDetail,
+        totalEstimate: total,
+        notes: document.getElementById('orderNotes').value.trim()
+      };
+
+      try {
+        let orderId = 'ORD-PREVIEW';
+        if (!isDemoMode) {
+          const res = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+          });
+          const result = await res.json();
+          if (result.orderId) orderId = result.orderId;
+        }
+
+        const waNumber = appData.settings.wa_admin || '6281234567890';
+        const waText = encodeURIComponent(
+          `Halo ${appData.settings.brand_name || 'CCtitipGO'}, saya sudah isi form titip:
+` +
+          `• ID: ${orderId}
+` +
+          `• Nama: ${payload.customerName}
+` +
+          `• Drop-off: ${payload.dropoffPoint}
+` +
+          `• Item: ${payload.itemsDetail}
+` +
+          `• Catatan: ${payload.notes || '-'}
+` +
+          `• Estimasi Awal: Rp ${total.toLocaleString('id-ID')}`
+        );
+
+        window.open(`https://wa.me/${waNumber}?text=${waText}`, '_blank');
+        btn.textContent = 'Pesanan Tercatat! ✓';
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.textContent = 'Kirim Pesanan & Konfirmasi WA';
+        }, 3000);
+      } catch (err) {
+        alert('Terjadi kendala koneksi, silakan coba lagi.');
+        btn.disabled = false;
+        btn.textContent = 'Kirim Pesanan & Konfirmasi WA';
+      }
+    }
+
+    function renderMoreUpdates(reset = false) {
+      if (!reset) visibleUpdatesCount += 3;
+      const container = document.getElementById('updatesContainer');
+      const slice = appData.updates.slice(0, visibleUpdatesCount);
+
+      container.innerHTML = slice.map(u => `
+        <div class="bg-white border border-[#282E33]/12 rounded-2xl p-4">
+          <div class="flex justify-between items-center text-[11px] text-[#282E33]/50 mb-1.5">
+            <strong class="text-[#282E33] font-bold">${u.author}</strong>
+            <span>${u.route} • ${u.date}</span>
+          </div>
+          <p class="text-xs text-[#282E33]/75 leading-relaxed">"${u.message}"</p>
+        </div>
+      `).join('');
+
+      const btn = document.getElementById('loadMoreBtn');
+      if (visibleUpdatesCount < appData.updates.length) {
+        btn.classList.remove('hidden');
+      } else {
+        btn.classList.add('hidden');
+      }
+    }
+
+    function openPaymentModal() { document.getElementById('paymentModal').classList.remove('hidden'); }
+    function closePaymentModal() { document.getElementById('paymentModal').classList.add('hidden'); }
+
+    function copyAccount() {
+      const acc = document.getElementById('modalBankAcc').textContent;
+      navigator.clipboard.writeText(acc);
+      const copyBtn = document.getElementById('copyBtn');
+      copyBtn.textContent = 'Tersalin ✓';
+      setTimeout(() => copyBtn.textContent = 'Salin', 2000);
+    }
+
+    function saveToCalendar() {
+      const title = encodeURIComponent(`Tutup PO ${appData.settings.brand_name || 'CCtitipGO'}`);
+      const details = encodeURIComponent(appData.settings.route_summary || '');
+      window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}`, '_blank');
+    }
+
+    function setupScrollObserver() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) entry.target.classList.add('visible');
+        });
+      }, { rootMargin: '0px 0px 150px 0px' });
+
+      document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+    }
+
+    initApp();
+  </script>
+</body>
+</html>
